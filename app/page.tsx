@@ -21,7 +21,7 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((data) => {
-        const parsedGames = data.matches.map((match) => ({
+        const parsedGames = data.matches.map((match: any ) => ({
           date: new Date(match.utcDate).toLocaleDateString(),
           homeTeam: match.homeTeam.name,
           awayTeam: match.awayTeam.name,
