@@ -35,7 +35,7 @@ export default function Home() {
           },
         }));
 
-        const enhancedGames = parsedGames.map((game) => ({
+        const enhancedGames = parsedGames.map((game: any) => ({
           ...game,
           prediction: calculatePrediction(game),
         }));
