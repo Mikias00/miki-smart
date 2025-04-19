@@ -7,11 +7,48 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
+interface TeamStats {
+  position: number;
+  goalsPerGame: number;
+}
+
+interface ScorePrediction {
+  home: number;
+  away: number;
+}
+
+interface Game {
+  date: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeStats: TeamStats;
+  awayStats: TeamStats;
+  prediction: {
+    homeWin: number;
+    draw: number;
+    awayWin: number;
+  };
+  exactScore: ScorePrediction;
+}
+
+interface StandingTeam {
+  position: number;
+  playedGames: number;
+  won: number;
+  draw: number;
+  lost: number;
+  points: number;
+  team: {
+    id: number;
+    name: string;
+  };
+}
+
 export default function Home() {
-  const [games, setGames] = useState([]);
-  const [selectedGame, setSelectedGame] = useState(null);
-  const [search, setSearch] = useState("");
-  const [standings, setStandings] = useState([]);
+  const [games, setGames] = useState<Game[]>([]);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [search, setSearch] = useState<string>("");
+  const [standings, setStandings] = useState<StandingTeam[]>([]);
 
   useEffect(() => {
     const fetchGames = fetch("https://api.football-data.org/v4/competitions/PD/matches?status=SCHEDULED", {
@@ -21,26 +58,32 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((data) => {
-        const parsedGames = data.matches.map((match: any ) => ({
-          date: new Date(match.utcDate).toLocaleDateString(),
-          homeTeam: match.homeTeam.name,
-          awayTeam: match.awayTeam.name,
-          homeStats: {
+        const parsedGames: Game[] = data.matches.map((match: any) => {
+          const homeStats = {
             position: Math.floor(Math.random() * 20) + 1,
             goalsPerGame: Math.random() * 2 + 0.5,
-          },
-          awayStats: {
+          };
+          const awayStats = {
             position: Math.floor(Math.random() * 20) + 1,
             goalsPerGame: Math.random() * 2 + 0.5,
-          },
-        }));
+          };
 
-        const enhancedGames = parsedGames.map((game: any) => ({
-          ...game,
-          prediction: calculatePrediction(game),
-        }));
+          const gameBase = {
+            date: new Date(match.utcDate).toLocaleDateString(),
+            homeTeam: match.homeTeam.name,
+            awayTeam: match.awayTeam.name,
+            homeStats,
+            awayStats,
+          };
 
-        setGames(enhancedGames);
+          return {
+            ...gameBase,
+            prediction: calculatePrediction({ ...gameBase, homeStats, awayStats }),
+            exactScore: predictExactScore({ ...gameBase, homeStats, awayStats }),
+          };
+        });
+
+        setGames(parsedGames);
       });
 
     const fetchStandings = fetch("https://api.football-data.org/v4/competitions/PD/standings", {
@@ -56,7 +99,7 @@ export default function Home() {
     Promise.all([fetchGames, fetchStandings]).catch((err) => console.error("Error loading data", err));
   }, []);
 
-  function calculatePrediction(game) {
+  function calculatePrediction(game: Game) {
     const { homeStats, awayStats } = game;
     let homeScore = 0;
     let drawScore = 0;
@@ -75,6 +118,20 @@ export default function Home() {
       homeWin: Math.round((homeScore / total) * 100),
       draw: Math.round((drawScore / total) * 100),
       awayWin: Math.round((awayScore / total) * 100),
+    };
+  }
+
+  function predictExactScore(game: Game): ScorePrediction {
+    const { homeStats, awayStats } = game;
+    let home = homeStats.goalsPerGame + (20 - homeStats.position) * 0.05 + 0.3;
+    let away = awayStats.goalsPerGame + (20 - awayStats.position) * 0.05;
+
+    if (homeStats.position <= 5) home += 0.3;
+    if (awayStats.position <= 5) away += 0.3;
+
+    return {
+      home: Math.max(0, Math.round(home)),
+      away: Math.max(0, Math.round(away)),
     };
   }
 
@@ -147,6 +204,9 @@ export default function Home() {
                 <li>🤝 תיקו: {game.prediction.draw}%</li>
                 <li>🛫 {game.awayTeam}: {game.prediction.awayWin}%</li>
               </ul>
+              <div className="mt-2 bg-white/20 rounded-lg p-2 text-sm">
+                תחזית מדויקת: <strong>{game.homeTeam} {game.exactScore.home} - {game.exactScore.away} {game.awayTeam}</strong>
+              </div>
             </div>
             <div className="mt-4 text-right">
               <Button
@@ -172,6 +232,7 @@ export default function Home() {
             <p>תאריך: {selectedGame?.date}</p>
             <p>מיקום בית: {selectedGame?.homeStats.position}, שערים למשחק: {selectedGame?.homeStats.goalsPerGame.toFixed(2)}</p>
             <p>מיקום חוץ: {selectedGame?.awayStats.position}, שערים למשחק: {selectedGame?.awayStats.goalsPerGame.toFixed(2)}</p>
+            <p><strong>תחזית תוצאה מדויקת:</strong> {selectedGame?.homeTeam} {selectedGame?.exactScore.home} - {selectedGame?.exactScore.away} {selectedGame?.awayTeam}</p>
           </div>
         </DialogContent>
       </Dialog>
