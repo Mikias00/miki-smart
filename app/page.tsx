@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface TeamStats {
   position: number;
@@ -215,13 +216,12 @@ export default function Home() {
               </div>
             </div>
             <div className="mt-4 text-right">
-              <Button
-                variant="outline"
-                className="text-white border-white hover:bg-white/20"
+              <button
+                className={cn("text-white border border-white hover:bg-white/20 rounded-lg px-4 py-1")}
                 onClick={() => setSelectedGame(game)}
               >
                 פרטים נוספים
-              </Button>
+              </button>
             </div>
           </CardContent>
         </Card>
