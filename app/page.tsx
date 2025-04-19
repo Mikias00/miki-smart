@@ -52,11 +52,7 @@ export default function Home() {
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const fetchGames = fetch("https://api.football-data.org/v4/competitions/PD/matches?status=SCHEDULED", {
-      headers: {
-        "X-Auth-Token": "4d10b18df7541e6bdad6e76cbb3d392"
-      }
-    })
+    const fetchGames = fetch("/api/games")
       .then((res) => {
         if (!res.ok) throw new Error("שגיאה בטעינת משחקים");
         return res.json();
@@ -97,11 +93,7 @@ export default function Home() {
       })
       .catch(() => setError("⚠️ לא הצלחנו לטעון את משחקי הליגה. נסה שוב מאוחר יותר. זוהרה אני אוהב אותך ❤️"));
 
-    const fetchStandings = fetch("https://api.football-data.org/v4/competitions/PD/standings", {
-      headers: {
-        "X-Auth-Token": "4d10b18df7541e6bdad6e76cbb3d392"
-      }
-    })
+    const fetchStandings = fetch("/api/standings")
       .then((res) => {
         if (!res.ok) throw new Error("שגיאה בטבלת הליגה");
         return res.json();
