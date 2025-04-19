@@ -83,7 +83,13 @@ export default function Home() {
           };
         });
 
-        setGames(parsedGames);
+        const enhancedGames = parsedGames.map((game: Game) => ({
+          ...game,
+          prediction: calculatePrediction(game),
+          exactScore: predictExactScore(game),
+        }));
+
+        setGames(enhancedGames);
       });
 
     const fetchStandings = fetch("https://api.football-data.org/v4/competitions/PD/standings", {
@@ -135,7 +141,7 @@ export default function Home() {
     };
   }
 
-  const filteredGames = games.filter((game) =>
+  const filteredGames = games.filter((game: Game) =>
     game.homeTeam.toLowerCase().includes(search.toLowerCase()) ||
     game.awayTeam.toLowerCase().includes(search.toLowerCase())
   );
@@ -188,7 +194,7 @@ export default function Home() {
 
       {filteredGames.length === 0 && <p className="text-center animate-pulse">טוען משחקים...</p>}
 
-      {filteredGames.map((game, index) => (
+      {filteredGames.map((game: Game, index: number) => (
         <Card key={index} className="rounded-2xl shadow-xl border border-white/10 bg-white/10 backdrop-blur-md">
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
