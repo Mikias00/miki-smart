@@ -3,7 +3,6 @@
 // אפליקציית Miki Smart - תחזית חכמה לליגת LA LIGA
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -50,6 +49,7 @@ export default function Home() {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [search, setSearch] = useState<string>("");
   const [standings, setStandings] = useState<StandingTeam[]>([]);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     const fetchGames = fetch("https://api.football-data.org/v4/competitions/PD/matches?status=SCHEDULED", {
@@ -57,7 +57,10 @@ export default function Home() {
         "X-Auth-Token": "4d10b18df7541e6bdad6e76cbb3d392"
       }
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("שגיאה בטעינת משחקים");
+        return res.json();
+      })
       .then((data) => {
         const parsedGames: Game[] = data.matches.map((match: any) => {
           const homeStats = {
@@ -91,17 +94,22 @@ export default function Home() {
         });
 
         setGames(parsedGames);
-      });
+      })
+      .catch(() => setError("⚠️ לא הצלחנו לטעון את משחקי הליגה. נסה שוב מאוחר יותר. זוהרה אני אוהב אותך ❤️"));
 
     const fetchStandings = fetch("https://api.football-data.org/v4/competitions/PD/standings", {
       headers: {
         "X-Auth-Token": "4d10b18df7541e6bdad6e76cbb3d392"
       }
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("שגיאה בטבלת הליגה");
+        return res.json();
+      })
       .then((data) => {
         setStandings(data.standings[0].table);
-      });
+      })
+      .catch(() => setError("⚠️ לא הצלחנו לטעון את טבלת הליגה. נסה שוב מאוחר יותר. זוהרה אני אוהב אותך ❤️"));
 
     Promise.all([fetchGames, fetchStandings]).catch((err) => console.error("Error loading data", err));
   }, []);
@@ -151,6 +159,8 @@ export default function Home() {
     <div className="p-4 space-y-4 bg-gradient-to-br from-blue-900 to-blue-600 min-h-screen text-white">
       <h1 className="text-4xl font-extrabold text-center mb-4 drop-shadow-lg">⚽ Miki Smart - תחזית משחקי LA LIGA</h1>
 
+      {error && <p className="text-center text-red-400 font-bold animate-pulse">{error}</p>}
+
       <div className="flex justify-center">
         <Input
           type="text"
@@ -193,7 +203,7 @@ export default function Home() {
         </div>
       </div>
 
-      {filteredGames.length === 0 && <p className="text-center animate-pulse">טוען משחקים...</p>}
+      {filteredGames.length === 0 && !error && <p className="text-center animate-pulse">טוען משחקים...</p>}
 
       {filteredGames.map((game: Game, index: number) => (
         <Card key={index} className="rounded-2xl shadow-xl border border-white/10 bg-white/10 backdrop-blur-md">
