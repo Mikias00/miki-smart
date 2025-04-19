@@ -76,20 +76,20 @@ export default function Home() {
             awayStats,
           };
 
-          return {
+          const fullGame: Game = {
             ...gameBase,
-            prediction: calculatePrediction({ ...gameBase, homeStats, awayStats }),
-            exactScore: predictExactScore({ ...gameBase, homeStats, awayStats }),
+            prediction: { homeWin: 0, draw: 0, awayWin: 0 },
+            exactScore: { home: 0, away: 0 },
+          };
+
+          return {
+            ...fullGame,
+            prediction: calculatePrediction(fullGame),
+            exactScore: predictExactScore(fullGame),
           };
         });
 
-        const enhancedGames = parsedGames.map((game: Game) => ({
-          ...game,
-          prediction: calculatePrediction(game),
-          exactScore: predictExactScore(game),
-        }));
-
-        setGames(enhancedGames);
+        setGames(parsedGames);
       });
 
     const fetchStandings = fetch("https://api.football-data.org/v4/competitions/PD/standings", {
